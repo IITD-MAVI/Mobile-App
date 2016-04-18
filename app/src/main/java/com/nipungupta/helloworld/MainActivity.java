@@ -2,6 +2,9 @@ package com.nipungupta.helloworld;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -15,14 +18,27 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Locale;
+import java.util.UUID;
 
 public class MainActivity extends Activity {
 
-    private static TextView tv;
-    private static BluetoothAdapter bluetoothAdapter;
-    private static TextToSpeech textToSpeech;
-    private static String message;
+    private static UUID MY_UUID = UUID.fromString("446118f0-8b1e-11e2-9e96-0800200c9a66");
+
+    private TextView tv;
+    private TextToSpeech textToSpeech;
+    private String message;
+
+    private BluetoothServerSocket mmServerSocket;
+    private BluetoothAdapter mAdapter;
+    private BluetoothDevice remoteDevice;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +57,7 @@ public class MainActivity extends Activity {
         });
 
         tv = (TextView) findViewById(R.id.textView);
-        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mAdapter = BluetoothAdapter.getDefaultAdapter();
         textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
             @Override
             public void onInit(int status) {
@@ -55,14 +71,13 @@ public class MainActivity extends Activity {
     }
 
     protected void turnOnBluetooth() {
-    //    BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        if(bluetoothAdapter == null) {
+        if(mAdapter == null) {
             message = "Device does not support bluetooth.";
             displayText(message);
             return;
         }
 
-        if(!bluetoothAdapter.isEnabled()) {
+        if(!mAdapter.isEnabled()) {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, 0);
             message = "Bluetooth is now turned on";
@@ -71,6 +86,45 @@ public class MainActivity extends Activity {
         else {
             message = "Bluetooth is already on";
             displayText(message);
+        }
+
+        BluetoothSocket socket = null;
+        try {
+            mmServerSocket = mAdapter.listenUsingRfcommWithServiceRecord("MyService", MY_UUID);
+            socket = mmServerSocket.accept();
+        } catch(IOException e) {
+            message = "Problem with Bluetooth connection";
+            displayText(message);
+        }
+
+        DataInputStream mmInStream;
+        DataOutputStream mmOutStream;
+        try {
+            mmServerSocket.close();
+
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
+            tmpIn = socket.getInputStream();
+            tmpOut = socket.getOutputStream();
+
+            mmInStream = new DataInputStream(tmpIn);
+            mmOutStream = new DataOutputStream(tmpOut);
+        } catch(IOException e) {
+            message = "Problem with input/output stream.";
+            displayText(message);
+            return;
+        }
+
+        byte[] buffer = new byte[1024];
+        int bytes;
+        while(true) {
+            try {
+                bytes = mmInStream.read(buffer);
+                String jsonString = new String(buffer,0,bytes);
+                displayText(jsonString);
+            } catch(IOException e) {
+                break;
+            }
         }
     }
 
