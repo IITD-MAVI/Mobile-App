@@ -134,9 +134,6 @@ public class MainActivity extends Activity {
         mAdapter.disable();
         tv.setText("Status: Disconnected");
         Toast.makeText(getApplicationContext(), "Bluetooth turned off", Toast.LENGTH_LONG).show();
-
-        String toSpeak = "Bluetooth turned off";
-        tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     public void connect(View view) {
@@ -193,6 +190,7 @@ public class MainActivity extends Activity {
 
     protected void displayText(String str) {
         textView.setText(str);
+        tts.speak(str, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     protected void vibratePhone(long timeInMiliSec) {
