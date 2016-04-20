@@ -2,11 +2,13 @@ package com.nipungupta.helloworld;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.view.Menu;
@@ -191,6 +193,12 @@ public class MainActivity extends Activity {
 
     protected void displayText(String str) {
         textView.setText(str);
+    }
+
+    protected void vibratePhone(long timeInMiliSec) {
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        vibrator.vibrate(timeInMiliSec);
+        return;
     }
 
     @Override
