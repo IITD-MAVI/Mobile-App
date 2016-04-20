@@ -2,13 +2,7 @@ package com.nipungupta.helloworld;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothServerSocket;
-import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,40 +10,25 @@ import android.os.Message;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends Activity {
 
     private Button onBtn;
     private Button offBtn;
-    private Button listBtn;
-    private Button findBtn;
     private Button conBtn;
 
-    private static UUID MY_UUID = UUID.fromString("446118f0-8b1e-11e2-9e96-0800200c9a66");
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_ENABLE_DSC = 3;
+    private String message;
 
     private TextView tv;
+    private TextView textView;
     private Handler mHandler;
-    private ListView listView;
-    private ArrayAdapter<String> BTArrayAdapter;
 
-    private BluetoothServerSocket mmServerSocket;
     private BluetoothAdapter mAdapter;
-    private Set<BluetoothDevice> pairedDevices;
 
 
     @Override
@@ -58,12 +37,12 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         tv = (TextView) findViewById(R.id.text);
+        textView = (TextView) findViewById(R.id.textCtr);
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         if(mAdapter==null) {
             onBtn.setEnabled(false);
             offBtn.setEnabled(false);
-            listBtn.setEnabled(false);
-            findBtn.setEnabled(false);
+            conBtn.setEnabled(false);
             tv.setText("Status: not supported");
             Toast.makeText(getApplicationContext(),"Your device does not support Bluetooth",Toast.LENGTH_LONG).show();
         } else {
@@ -83,22 +62,6 @@ public class MainActivity extends Activity {
                 }
             });
 
-            listBtn = (Button) findViewById(R.id.paired);
-            listBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    list(v);
-                }
-            });
-
-            findBtn = (Button) findViewById(R.id.search);
-            findBtn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    find(v);
-                }
-            });
-
             conBtn = (Button) findViewById(R.id.connect);
             conBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -112,14 +75,10 @@ public class MainActivity extends Activity {
                 public void handleMessage(Message message) {
                     String str = message.getData().getString("message");
                     if(str!=null && !str.equals("")) {
-                        tv.setText(str);
+                        handle(str);
                     }
                 }
             };
-
-            listView = (ListView) findViewById(R.id.listView1);
-            BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-            listView.setAdapter(BTArrayAdapter);
         }
     }
 
@@ -156,38 +115,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    public void list(View view) {
-        pairedDevices = mAdapter.getBondedDevices();
-        tv.setText("Status: "+pairedDevices.size()+" paired devices found");
-        for(BluetoothDevice device : pairedDevices)
-            BTArrayAdapter.add(device.getName()+"\n"+device.getAddress());
-
-        Toast.makeText(getApplicationContext(), "Show Paired Devices", Toast.LENGTH_LONG).show();
-    }
-
-    final BroadcastReceiver bReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            if(BluetoothDevice.ACTION_FOUND.equals(action)) {
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                BTArrayAdapter.add(device.getName()+"\n"+device.getAddress());
-                BTArrayAdapter.notifyDataSetChanged();
-            }
-        }
-    };
-
-    public void find(View view) {
-        if(mAdapter.isDiscovering()) {
-            mAdapter.cancelDiscovery();
-        }
-        else {
-            BTArrayAdapter.clear();
-            mAdapter.startDiscovery();
-            registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
-        }
-    }
-
     public void off(View view) {
         mAdapter.disable();
         tv.setText("Status: Disconnected");
@@ -197,14 +124,57 @@ public class MainActivity extends Activity {
     public void connect(View view) {
         AcceptThread accept = new AcceptThread(mAdapter, mHandler);
         accept.start();
+    }
 
-//        Intent newActIntent = new Intent(this, DisplayActivity.class);
-//        newActIntent.putExtra("bluetooth", mAdapter);
-//        startActivity(newActIntent);
+    public void handle(String jsonMessage) {
+        JsonPath jsonPath = new JsonPath(jsonMessage);
+
+        //Face Detection
+        int noOfFaces = Integer.parseInt((String) jsonPath.read("$.faceDetectionString.noOfFaces"));
+        if(noOfFaces > 0) {
+            message = noOfFaces + "faces are detected.\n";
+            int noOfRecFaces = jsonPath.read("$.faceDetectionString.nameArray.length()");
+            if(noOfRecFaces==0) {
+                message += "None of them is recognized";
+                displayText(message);
+            }
+            else {
+                message += "Recognized faces are ";
+                for(int i=0; i<noOfRecFaces; i++) {
+                    message += jsonPath.read("$.faceDetectionString.nameArray["+i+"]") + ", ";
+                    displayText(message);
+                }
+            }
+        }
+
+
+        //Texture Detection
+        if(jsonPath.read("$.textureString.pothole").equals("True")) {
+            message = "Pothole detected ahead. Be careful.";
+            displayText(message);
+//            vibratePhone(500);
+        }
+    }
+
+    public static String getTextureFromCode(int code) {
+        if(code==0) {
+            return "not detected";
+        }
+        else if(code==1) {
+            return "road";
+        }
+        else if(code==2) {
+            return "pavement";
+        }
+        else if(code==3) {
+            return "grass";
+        }
+
+        return null;
     }
 
     protected void displayText(String str) {
-        tv.setText(str);
+        textView.setText(str);
     }
 
     @Override
