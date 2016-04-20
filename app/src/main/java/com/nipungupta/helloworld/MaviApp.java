@@ -6,7 +6,7 @@ package com.nipungupta.helloworld;
 public class MaviApp {
 
     private static String message;
-    private static MainActivity mainActivity = new MainActivity();
+    private static DisplayActivity displayActivity = new DisplayActivity();
 
     public static void handleMessage(String jsonMessage) {
         JsonPath jsonPath = new JsonPath(jsonMessage);
@@ -18,13 +18,13 @@ public class MaviApp {
             int noOfRecFaces = jsonPath.read("$.faceDetectionString.nameArray.length()");
             if(noOfRecFaces==0) {
                 message += "None of them is recognized";
-                mainActivity.displayText(message);
+                displayActivity.displayText(message);
             }
             else {
                 message += "Recognized faces are ";
                 for(int i=0; i<noOfRecFaces; i++) {
                     message += jsonPath.read("$.faceDetectionString.nameArray["+i+"]") + ", ";
-                    mainActivity.displayText(message);
+                    displayActivity.displayText(message);
                 }
             }
         }
@@ -33,8 +33,8 @@ public class MaviApp {
         //Texture Detection
         if(jsonPath.read("$.textureString.pothole").equals("True")) {
             message = "Pothole detected ahead. Be careful.";
-            mainActivity.displayText(message);
-            mainActivity.vibratePhone(500);
+            displayActivity.displayText(message);
+            displayActivity.vibratePhone(500);
         }
     }
 

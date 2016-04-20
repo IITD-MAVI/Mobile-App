@@ -10,11 +10,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Vibrator;
-import android.speech.tts.TextToSpeech;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v7.widget.Toolbar;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,12 +23,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.DataInputStream;
-import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,12 +40,12 @@ public class MainActivity extends Activity {
 
     private static UUID MY_UUID = UUID.fromString("446118f0-8b1e-11e2-9e96-0800200c9a66");
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_ENABLE_DSC = 3;
 
     private TextView tv;
+    private Handler mHandler;
     private ListView listView;
     private ArrayAdapter<String> BTArrayAdapter;
-    private TextToSpeech textToSpeech;
-    private String message;
 
     private BluetoothServerSocket mmServerSocket;
     private BluetoothAdapter mAdapter;
@@ -111,21 +107,20 @@ public class MainActivity extends Activity {
                 }
             });
 
+            mHandler = new Handler(Looper.getMainLooper()) {
+                @Override
+                public void handleMessage(Message message) {
+                    String str = message.getData().getString("message");
+                    if(str!=null && !str.equals("")) {
+                        tv.setText(str);
+                    }
+                }
+            };
+
             listView = (ListView) findViewById(R.id.listView1);
             BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
             listView.setAdapter(BTArrayAdapter);
         }
-
-        textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if(status != TextToSpeech.ERROR) {
-                    textToSpeech.setLanguage(Locale.UK);
-                }
-            }
-        });
-
-   //     turnOnBluetooth();
     }
 
     public void on(View view) {
@@ -137,6 +132,10 @@ public class MainActivity extends Activity {
         else {
             Toast.makeText(getApplicationContext(), "Bluetooth is already on", Toast.LENGTH_LONG).show();
         }
+
+        Intent discover = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        discover.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
+        startActivityForResult(discover, REQUEST_ENABLE_DSC);
     }
 
     @Override
@@ -146,6 +145,13 @@ public class MainActivity extends Activity {
                 tv.setText("Status: Enabled");
             } else {
                 tv.setText("Status: Disabled");
+            }
+        }
+        else if(requestCode==REQUEST_ENABLE_DSC) {
+            if(mAdapter.getScanMode() == BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE) {
+                tv.setText("Status: Enabled and Discoverable");
+            } else {
+                tv.setText("Status: Enabled but not Discoverable");
             }
         }
     }
@@ -189,95 +195,16 @@ public class MainActivity extends Activity {
     }
 
     public void connect(View view) {
-        AcceptThread accept = new AcceptThread(mAdapter);
+        AcceptThread accept = new AcceptThread(mAdapter, mHandler);
         accept.start();
+
+//        Intent newActIntent = new Intent(this, DisplayActivity.class);
+//        newActIntent.putExtra("bluetooth", mAdapter);
+//        startActivity(newActIntent);
     }
 
-//    @Override
-//    protected void onDestroy() {
-//        super.onDestroy();
-//        unregisterReceiver(bReceiver);
-//    }
-
-    protected void turnOnBluetooth() {
-        if(mAdapter == null) {
-            message = "Device does not support bluetooth.";
-            displayText(message);
-            return;
-        }
-
-        if(!mAdapter.isEnabled()) {
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, 0);
-            message = "Bluetooth is now turned on";
-            displayText(message);
-        }
-        else {
-            message = "Bluetooth is already on";
-            displayText(message);
-        }
-
-        BluetoothSocket socket = null;
-        try {
-            mmServerSocket = mAdapter.listenUsingRfcommWithServiceRecord("MyService", MY_UUID);
-            socket = mmServerSocket.accept();
-        } catch(IOException e) {
-            message = "Problem with Bluetooth connection";
-            displayText(message);
-        }
-
-        DataInputStream mmInStream;
-        DataOutputStream mmOutStream;
-        try {
-            mmServerSocket.close();
-
-            InputStream tmpIn = null;
-            OutputStream tmpOut = null;
-            tmpIn = socket.getInputStream();
-            tmpOut = socket.getOutputStream();
-
-            mmInStream = new DataInputStream(tmpIn);
-            mmOutStream = new DataOutputStream(tmpOut);
-        } catch(IOException e) {
-            message = "Problem with input/output stream.";
-            displayText(message);
-            return;
-        }
-
-        byte[] buffer = new byte[1024];
-        int bytes;
-        while(true) {
-            try {
-                bytes = mmInStream.read(buffer);
-                String jsonString = new String(buffer,0,bytes);
-                displayText(jsonString);
-            } catch(IOException e) {
-                break;
-            }
-        }
-    }
-
- //   @SuppressWarnings("deprecation")
- //   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    protected void displayText(String text) {
-        tv.setText(text);
-        textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
-//        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, this.hashCode()+"");
-//        }
-//        else {
-//            HashMap<String, String> map = new HashMap<>();
-//            map.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "MessageId");
-//            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, map);
-//        }
-
-        return;
-    }
-
-    protected void vibratePhone(long timeInMiliSec) {
-        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        vibrator.vibrate(timeInMiliSec);
-        return;
+    protected void displayText(String str) {
+        tv.setText(str);
     }
 
     @Override
