@@ -31,9 +31,8 @@ public class DisplayActivity extends AppCompatActivity {
         });
 
         Intent dispIntent = getIntent();
-
     }
-    
+
     protected void vibratePhone(long timeInMiliSec) {
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         vibrator.vibrate(timeInMiliSec);

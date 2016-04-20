@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Locale;
 
 public class MainActivity extends Activity {
 
@@ -29,6 +32,7 @@ public class MainActivity extends Activity {
     private Handler mHandler;
 
     private BluetoothAdapter mAdapter;
+    private TextToSpeech tts;
 
 
     @Override
@@ -79,6 +83,15 @@ public class MainActivity extends Activity {
                     }
                 }
             };
+
+            tts = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if(status != TextToSpeech.ERROR) {
+                        tts.setLanguage(Locale.UK);
+                    }
+                }
+            });
         }
     }
 
@@ -119,6 +132,9 @@ public class MainActivity extends Activity {
         mAdapter.disable();
         tv.setText("Status: Disconnected");
         Toast.makeText(getApplicationContext(), "Bluetooth turned off", Toast.LENGTH_LONG).show();
+
+        String toSpeak = "Bluetooth turned off";
+        tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 
     public void connect(View view) {
