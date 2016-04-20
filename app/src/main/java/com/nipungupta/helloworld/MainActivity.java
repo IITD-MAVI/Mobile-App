@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
     private Button offBtn;
     private Button listBtn;
     private Button findBtn;
+    private Button conBtn;
 
     private static UUID MY_UUID = UUID.fromString("446118f0-8b1e-11e2-9e96-0800200c9a66");
     private static final int REQUEST_ENABLE_BT = 1;
@@ -102,8 +103,17 @@ public class MainActivity extends Activity {
                 }
             });
 
+            conBtn = (Button) findViewById(R.id.connect);
+            conBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    connect(v);
+                }
+            });
+
             listView = (ListView) findViewById(R.id.listView1);
             BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+            listView.setAdapter(BTArrayAdapter);
         }
 
         textToSpeech = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
@@ -178,11 +188,16 @@ public class MainActivity extends Activity {
         Toast.makeText(getApplicationContext(), "Bluetooth turned off", Toast.LENGTH_LONG).show();
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unregisterReceiver(bReceiver);
+    public void connect(View view) {
+        AcceptThread accept = new AcceptThread(mAdapter);
+        accept.start();
     }
+
+//    @Override
+//    protected void onDestroy() {
+//        super.onDestroy();
+//        unregisterReceiver(bReceiver);
+//    }
 
     protected void turnOnBluetooth() {
         if(mAdapter == null) {
