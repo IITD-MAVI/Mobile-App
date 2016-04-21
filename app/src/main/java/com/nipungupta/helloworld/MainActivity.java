@@ -17,6 +17,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import net.minidev.json.JSONArray;
+
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -94,6 +96,9 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+
+
+            handle("{'faceDetectionString':{\"noOfFaces\":\"2\",\"nameArray\":[\"Nipun\",\"Sachin\"]}}");
         }
     }
 
@@ -147,8 +152,8 @@ public class MainActivity extends Activity {
         //Face Detection
         int noOfFaces = Integer.parseInt((String) jsonPath.read("$.faceDetectionString.noOfFaces"));
         if(noOfFaces > 0) {
-            message = noOfFaces + "faces are detected.\n";
-            int noOfRecFaces = jsonPath.read("$.faceDetectionString.nameArray.length()");
+            message = noOfFaces + " faces are detected.\n";
+            int noOfRecFaces = ((JSONArray) jsonPath.read("$.faceDetectionString.nameArray")).size();
             if(noOfRecFaces==0) {
                 message += "None of them is recognized";
                 displayText(message);
@@ -162,27 +167,26 @@ public class MainActivity extends Activity {
             }
         }
 
-
         //Texture Detection
-        if(jsonPath.read("$.textureString.pothole").equals("True")) {
-            message = "Pothole detected ahead. Be careful.";
-            displayText(message);
-//            vibratePhone(500);
-        }
+//        if(jsonPath.read("$.textureString.pothole").equals("True")) {
+//            message = "Pothole detected ahead. Be careful.";
+//            displayText(message);
+////            vibratePhone(500);
+//        }
     }
 
     public static String getTextureFromCode(int code) {
         if(code==0) {
-            return "not detected";
-        }
-        else if(code==1) {
             return "road";
         }
-        else if(code==2) {
+        else if(code==1) {
             return "pavement";
         }
-        else if(code==3) {
+        else if(code==2) {
             return "grass";
+        }
+        else if(code==3) {
+            return "not detected";
         }
 
         return null;

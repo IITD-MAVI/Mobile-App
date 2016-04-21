@@ -4,9 +4,6 @@
     <string name="Text">Status:- </string>
     <string name="on">Turn On</string>
     <string name="off">Turn Off</string>
-    <string name="List">List Paired Devices</string>
-    <string name="Find">Search new Devices / Cancel</string>
     <string name="connect">Connect to Controller</string>
-    <string name="title_activity_display">DisplayActivity</string>
-    <string name="TextControl">Waiting for controller...</string>
+    <string name="TextControl">Controller not connected</string>
 </resources>
