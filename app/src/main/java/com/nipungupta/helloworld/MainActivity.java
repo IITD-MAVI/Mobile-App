@@ -26,6 +26,12 @@ public class MainActivity extends Activity {
     private Button onBtn;
     private Button offBtn;
     private Button conBtn;
+    private Button r1c1Btn;
+    private Button r1c2Btn;
+    private Button r1c3Btn;
+    private Button r2c1Btn;
+    private Button r2c2Btn;
+    private Button r2c3Btn;
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_ENABLE_DSC = 3;
@@ -78,6 +84,54 @@ public class MainActivity extends Activity {
                 }
             });
 
+            r1c1Btn = (Button) findViewById(R.id.r1c1);
+            r1c1Btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    speakTexture(v);
+                }
+            });
+
+            r1c2Btn = (Button) findViewById(R.id.r1c2);
+            r1c2Btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    speakTexture(v);
+                }
+            });
+
+            r1c3Btn = (Button) findViewById(R.id.r1c3);
+            r1c3Btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    speakTexture(v);
+                }
+            });
+
+            r2c1Btn = (Button) findViewById(R.id.r2c1);
+            r2c1Btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    speakTexture(v);
+                }
+            });
+
+            r2c2Btn = (Button) findViewById(R.id.r2c2);
+            r2c2Btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    speakTexture(v);
+                }
+            });
+
+            r2c3Btn = (Button) findViewById(R.id.r2c3);
+            r2c3Btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    speakTexture(v);
+                }
+            });
+
             mHandler = new Handler(Looper.getMainLooper()) {
                 @Override
                 public void handleMessage(Message message) {
@@ -97,8 +151,8 @@ public class MainActivity extends Activity {
                 }
             });
 
-
-            handle("{'faceDetectionString':{\"noOfFaces\":\"2\",\"nameArray\":[\"Nipun\",\"Sachin\"]}}");
+            String json = "{\"positionString\": {\"pos_y\": 2.5426, \"pos_z\": 0.1243, \"pos_x\": 1.2314}, \"textureString\": {\"pothole\": \"True\", \"texture\": [[\"0\", \"0\", \"0\"], [\"1\", \"0\", \"0\"]]}, \"signBoardString\": {\"isSignBoardDetected\": \"False\"}, \"faceDetectionString\": {\"nameArray\": [\"Name1\", \"Name2\"], \"noOfFaces\": \"2\"}}";
+            handle(json);
         }
     }
 
@@ -146,47 +200,92 @@ public class MainActivity extends Activity {
         accept.start();
     }
 
+    public void speakTexture(View view) {
+        Button button = (Button) view;
+
+        String toSpeak = button.getText().toString();
+        if(toSpeak.equals("Not Detected")) {
+            toSpeak = "Texture "+toSpeak;
+        }
+
+        switch(button.getId()) {
+            case R.id.r1c1:
+            case R.id.r2c1:
+                toSpeak = toSpeak+" on the left";
+                break;
+            case R.id.r1c2:
+            case R.id.r2c2:
+                toSpeak = toSpeak+" ahead";
+                break;
+            case R.id.r1c3:
+            case R.id.r2c3:
+                toSpeak = toSpeak+" on the right";
+                break;
+        }
+
+        tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
     public void handle(String jsonMessage) {
+        System.out.println(jsonMessage);
         JsonPath jsonPath = new JsonPath(jsonMessage);
 
         //Face Detection
-        int noOfFaces = Integer.parseInt((String) jsonPath.read("$.faceDetectionString.noOfFaces"));
+        JsonPath fdJson = new JsonPath((String) jsonPath.read("$.faceDetectionString"));
+        int noOfFaces = Integer.parseInt((fdJson.read("$.noOfFaces")).toString());
         if(noOfFaces > 0) {
-            message = noOfFaces + " faces are detected.\n";
-            int noOfRecFaces = ((JSONArray) jsonPath.read("$.faceDetectionString.nameArray")).size();
+            message = noOfFaces + " faces detected.\n";
+            int noOfRecFaces = ((JSONArray) fdJson.read("$.nameArray")).size();
             if(noOfRecFaces==0) {
-                message += "None of them is recognized";
+                message += "None recognized";
                 displayText(message);
             }
             else {
-                message += "Recognized faces are ";
+                message += "Recognized ";
                 for(int i=0; i<noOfRecFaces; i++) {
-                    message += jsonPath.read("$.faceDetectionString.nameArray["+i+"]") + ", ";
+                    message += fdJson.read("$.nameArray["+i+"]") + ", ";
                     displayText(message);
                 }
             }
         }
 
+        //Signboard Detection
+        JsonPath sbJson = new JsonPath((String) jsonPath.read("$.signBoardString"));
+        boolean isSign = Boolean.parseBoolean((sbJson.read("$.isSignBoardDetected")).toString());
+        if(isSign) {
+            message = "Sign board detected.";
+            displayText(message);
+        }
+
         //Texture Detection
-//        if(jsonPath.read("$.textureString.pothole").equals("True")) {
-//            message = "Pothole detected ahead. Be careful.";
-//            displayText(message);
-////            vibratePhone(500);
-//        }
+        JsonPath tdJson = new JsonPath((String) jsonPath.read("$.textureString"));
+        boolean isPothole = Boolean.parseBoolean((tdJson.read("$.pothole")).toString());
+        if(isPothole) {
+            message = "Pothole detected. Be careful.";
+            displayText(message);
+            vibratePhone(500);
+        }
+        String[][] textureDesc = tdJson.read("$.texture");
+        r1c1Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[0][0])));
+        r1c2Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[0][1])));
+        r1c3Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[0][2])));
+        r2c1Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[1][0])));
+        r2c2Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[1][1])));
+        r2c3Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[1][2])));
     }
 
     public static String getTextureFromCode(int code) {
         if(code==0) {
-            return "road";
+            return "Road";
         }
         else if(code==1) {
-            return "pavement";
+            return "Pavement";
         }
         else if(code==2) {
-            return "grass";
+            return "Grass";
         }
         else if(code==3) {
-            return "not detected";
+            return "Not Detected";
         }
 
         return null;
@@ -200,7 +299,6 @@ public class MainActivity extends Activity {
     protected void vibratePhone(long timeInMiliSec) {
         Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         vibrator.vibrate(timeInMiliSec);
-        return;
     }
 
     @Override

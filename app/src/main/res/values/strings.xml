@@ -4,6 +4,7 @@
     <string name="Text">Status:- </string>
     <string name="on">Turn On</string>
     <string name="off">Turn Off</string>
-    <string name="connect">Connect to Controller</string>
+    <string name="connect">Connect Controller</string>
     <string name="TextControl">Controller not connected</string>
+    <string name="Texture">Not Detected</string>
 </resources>
