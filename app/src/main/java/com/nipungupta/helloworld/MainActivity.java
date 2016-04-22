@@ -36,6 +36,9 @@ public class MainActivity extends Activity {
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_ENABLE_DSC = 3;
     private String message;
+    private boolean currPothole = false;
+    private boolean currSignboard = false;
+    private int currFaces = 0;
 
     private TextView tv;
     private TextView textView;
@@ -233,7 +236,8 @@ public class MainActivity extends Activity {
         //Face Detection
         JsonPath fdJson = new JsonPath((String) jsonPath.read("$.faceDetectionString"));
         int noOfFaces = Integer.parseInt((fdJson.read("$.noOfFaces")).toString());
-        if(noOfFaces > 0) {
+        if(noOfFaces > 0 && noOfFaces!=currFaces) {
+            currFaces = noOfFaces;
             message = noOfFaces + " faces detected.\n";
             int noOfRecFaces = ((JSONArray) fdJson.read("$.nameArray")).size();
             if(noOfRecFaces==0) {
@@ -248,22 +252,33 @@ public class MainActivity extends Activity {
                 }
             }
         }
+        else if(noOfFaces!=currFaces) {
+            currFaces = noOfFaces;
+        }
 
         //Signboard Detection
         JsonPath sbJson = new JsonPath((String) jsonPath.read("$.signBoardString"));
         boolean isSign = Boolean.parseBoolean((sbJson.read("$.isSignBoardDetected")).toString());
-        if(isSign) {
+        if(isSign && !currSignboard) {
+            currSignboard = true;
             message = "Sign board detected.";
             displayText(message);
+        }
+        else if(!isSign & currSignboard) {
+            currSignboard = false;
         }
 
         //Texture Detection
         JsonPath tdJson = new JsonPath((String) jsonPath.read("$.textureString"));
         boolean isPothole = Boolean.parseBoolean((tdJson.read("$.pothole")).toString());
-        if(isPothole) {
+        if(isPothole && !currPothole) {
+            currPothole = true;
             message = "Pothole detected. Be careful.";
             displayText(message);
             vibratePhone(500);
+        }
+        else if(!isPothole & currPothole) {
+            currPothole = false;
         }
         JSONArray textureDesc = tdJson.read("$.texture");
         r1c1Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(0)).get(0).toString()) ));
