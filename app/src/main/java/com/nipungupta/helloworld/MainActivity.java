@@ -151,8 +151,8 @@ public class MainActivity extends Activity {
                 }
             });
 
-            String json = "{\"positionString\": {\"pos_y\": 2.5426, \"pos_z\": 0.1243, \"pos_x\": 1.2314}, \"textureString\": {\"pothole\": \"True\", \"texture\": [[\"0\", \"0\", \"0\"], [\"1\", \"0\", \"0\"]]}, \"signBoardString\": {\"isSignBoardDetected\": \"False\"}, \"faceDetectionString\": {\"nameArray\": [\"Name1\", \"Name2\"], \"noOfFaces\": \"2\"}}";
-            handle(json);
+//            String json = "{"signBoardString": "{\"isSignBoardDetected\": \"True\"}", "textureString": "{\"pothole\": \"False\", \"texture\": [[\"1\", \"0\", \"1\"], [\"1\", \"0\", \"1\"]]}", "positionString": "{\"pos_x\": 1.2314, \"pos_y\": 2.5426, \"pos_z\": 0.1243}", "faceDetectionString": "{\"noOfFaces\": \"2\", \"nameArray\": [\"Anupam\", \"Anupam\"]}"}";
+//            handle(json);
         }
     }
 
@@ -265,13 +265,13 @@ public class MainActivity extends Activity {
             displayText(message);
             vibratePhone(500);
         }
-        String[][] textureDesc = tdJson.read("$.texture");
-        r1c1Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[0][0])));
-        r1c2Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[0][1])));
-        r1c3Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[0][2])));
-        r2c1Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[1][0])));
-        r2c2Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[1][1])));
-        r2c3Btn.setText(getTextureFromCode(Integer.parseInt(textureDesc[1][2])));
+        JSONArray textureDesc = tdJson.read("$.texture");
+        r1c1Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(0)).get(0).toString()) ));
+        r1c2Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(0)).get(1).toString()) ));
+        r1c3Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(0)).get(2).toString()) ));
+        r2c1Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(1)).get(0).toString()) ));
+        r2c2Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(1)).get(1).toString()) ));
+        r2c3Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(1)).get(2).toString()) ));
     }
 
     public static String getTextureFromCode(int code) {
