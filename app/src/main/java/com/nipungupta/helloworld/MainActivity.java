@@ -19,9 +19,7 @@ import android.widget.Toast;
 
 import net.minidev.json.JSONArray;
 
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 public class MainActivity extends Activity {
 
