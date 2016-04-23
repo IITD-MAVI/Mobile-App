@@ -19,7 +19,9 @@ import android.widget.Toast;
 
 import net.minidev.json.JSONArray;
 
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends Activity {
 
@@ -35,6 +37,20 @@ public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_ENABLE_DSC = 3;
+    private static final SignBoard[] signBoardData = {
+            new SignBoard(28.5451600, 77.1906900, "Cycle Stand"),
+            new SignBoard(28.5448117, 77.1909533, "Use me"),
+            new SignBoard(28.5442717, 77.1912483, "Hospital, Boys Hostel, Student Activity Center, West Campus"),
+            new SignBoard(28.5440533, 77.1915483, "Canteen, Staff Canteen, Maintenance Unit"),
+            new SignBoard(28.5440633, 77.1920300, "IDD Center, Central Workshop"),
+            new SignBoard(28.5441883, 77.1920233, "Mathematics Department, Library, Dogra Hall"),
+            new SignBoard(28.5443467, 77.1922350, "Canara Bank, I.I.T. Delhi"),
+            new SignBoard(28.5445833, 77.1928700, "Please do not walk on grass"),
+            new SignBoard(28.5443617, 77.1928617, "Administrative Block, Employees Union"),
+            new SignBoard(28.54430012, 77.1932017, "Director's Office, Seminar Hall, Security Control Room, Textile Department, SBI, IDDC, Workshop"),
+            new SignBoard(28.5444933, 77.1934367, "Academic Block, Administrative Block, Seminar Hall, Exhibition Hall")
+    };
+
     private String message;
     private boolean currPothole = false;
     private boolean currSignboard = false;
@@ -156,6 +172,9 @@ public class MainActivity extends Activity {
 
 //            String json = "{"signBoardString": "{\"isSignBoardDetected\": \"True\"}", "textureString": "{\"pothole\": \"False\", \"texture\": [[\"1\", \"0\", \"1\"], [\"1\", \"0\", \"1\"]]}", "positionString": "{\"pos_x\": 1.2314, \"pos_y\": 2.5426, \"pos_z\": 0.1243}", "faceDetectionString": "{\"noOfFaces\": \"2\", \"nameArray\": [\"Anupam\", \"Anupam\"]}"}";
 //            handle(json);
+//            double a1 = SignBoard.distanceGPS(28.5451600, 77.1906900, 28.5448117, 77.1909533);
+//            double a2 = SignBoard.distanceGPS(28.5448117, 77.1909533, 28.5451600, 77.1906900);
+//            displayText(a1+"\n"+a2);
         }
     }
 
@@ -230,7 +249,7 @@ public class MainActivity extends Activity {
     }
 
     public void handle(String jsonMessage) {
-        System.out.println(jsonMessage);
+     //   System.out.println(jsonMessage);
         JsonPath jsonPath = new JsonPath(jsonMessage);
 
         //Face Detection
@@ -262,6 +281,13 @@ public class MainActivity extends Activity {
         if(isSign && !currSignboard) {
             currSignboard = true;
             message = "Sign board detected.";
+
+            JsonPath posJson = new JsonPath((String) jsonPath.read("$.positionString"));
+            double latitude = posJson.read("$.pos_y");
+            double longitude = posJson.read("$.pos_x");
+            int idx = SignBoard.getNextSignBoard(latitude, longitude, signBoardData);
+            message = message + "\n" + signBoardData[idx].getData();
+
             displayText(message);
         }
         else if(!isSign & currSignboard) {
