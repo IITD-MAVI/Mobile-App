@@ -71,16 +71,17 @@ public class SignBoard {
     }
 
     public static int getNextSignBoard(double lat, double lon, final SignBoard[] signBoards) {
-        double[] collCheck = new double[signBoards.length-1];
+        double[] distances = new double[signBoards.length];
         double minimum = Double.MAX_VALUE;
         int minIdx = -1;
-        for(int i=0; i<signBoards.length-1; i++) {
-            collCheck[i] = isPointBetweenSignboards(lat, lon, signBoards[i], signBoards[i+1]);
-            if(collCheck[i] < minimum) {
-                minimum = collCheck[i];
-                minIdx = i+1;
+        for(int i=0; i<signBoards.length; i++) {
+            distances[i] = distanceGPS(lat, lon, signBoards[i].getLatitude(), signBoards[i].getLongitude());
+            if(distances[i] < minimum) {
+                minimum = distances[i];
+                minIdx = i;
             }
         }
+
         return minIdx;
     }
 }
