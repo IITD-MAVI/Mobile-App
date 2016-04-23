@@ -252,7 +252,16 @@ public class MainActivity extends Activity {
      //   System.out.println(jsonMessage);
         JsonPath jsonPath = new JsonPath(jsonMessage);
 
-        //Face Detection
+        boolean isPothole = potholeDetect(jsonPath);
+        if(!isPothole) {
+            boolean isSignDetect = signboardDetect(jsonPath);
+            if(!isSignDetect) {
+                faceDetect(jsonPath);
+            }
+        }
+    }
+
+    public void faceDetect(JsonPath jsonPath) {
         JsonPath fdJson = new JsonPath((String) jsonPath.read("$.faceDetectionString"));
         int noOfFaces = Integer.parseInt((fdJson.read("$.noOfFaces")).toString());
         if(noOfFaces > 0 && noOfFaces!=currFaces) {
@@ -274,8 +283,9 @@ public class MainActivity extends Activity {
         else if(noOfFaces!=currFaces) {
             currFaces = noOfFaces;
         }
+    }
 
-        //Signboard Detection
+    public boolean signboardDetect(JsonPath jsonPath) {
         JsonPath sbJson = new JsonPath((String) jsonPath.read("$.signBoardString"));
         boolean isSign = Boolean.parseBoolean((sbJson.read("$.isSignBoardDetected")).toString());
         if(isSign && !currSignboard) {
@@ -283,29 +293,24 @@ public class MainActivity extends Activity {
             message = "Sign board detected.";
 
             JsonPath posJson = new JsonPath((String) jsonPath.read("$.positionString"));
-            double latitude = posJson.read("$.pos_y");
-            double longitude = posJson.read("$.pos_x");
+            double latitude = posJson.read("$.pos_x");
+            double longitude = posJson.read("$.pos_y");
             int idx = SignBoard.getNextSignBoard(latitude, longitude, signBoardData);
             message = message + "\n" + signBoardData[idx].getData();
 
             displayText(message);
+            return true;
         }
         else if(!isSign & currSignboard) {
             currSignboard = false;
+            return false;
         }
+        return false;
+    }
 
-        //Texture Detection
+    public boolean potholeDetect(JsonPath jsonPath) {
         JsonPath tdJson = new JsonPath((String) jsonPath.read("$.textureString"));
-        boolean isPothole = Boolean.parseBoolean((tdJson.read("$.pothole")).toString());
-        if(isPothole && !currPothole) {
-            currPothole = true;
-            message = "Pothole detected. Be careful.";
-            displayText(message);
-            vibratePhone(500);
-        }
-        else if(!isPothole & currPothole) {
-            currPothole = false;
-        }
+
         JSONArray textureDesc = tdJson.read("$.texture");
         r1c1Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(0)).get(0).toString()) ));
         r1c2Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(0)).get(1).toString()) ));
@@ -313,6 +318,20 @@ public class MainActivity extends Activity {
         r2c1Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(1)).get(0).toString()) ));
         r2c2Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(1)).get(1).toString()) ));
         r2c3Btn.setText(getTextureFromCode( Integer.parseInt(((JSONArray) textureDesc.get(1)).get(2).toString()) ));
+
+        boolean isPothole = Boolean.parseBoolean((tdJson.read("$.pothole")).toString());
+        if(isPothole && !currPothole) {
+            currPothole = true;
+            message = "Pothole detected. Be careful.";
+            displayText(message);
+            vibratePhone(500);
+            return true;
+        }
+        else if(!isPothole & currPothole) {
+            currPothole = false;
+            return false;
+        }
+        return false;
     }
 
     public static String getTextureFromCode(int code) {
