@@ -11,6 +11,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,6 +19,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.maps.GeocodingApi;
+import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.LatLng;
 import com.google.maps.GeoApiContext;
 import com.google.maps.RoadsApi;
@@ -26,8 +29,10 @@ import com.google.maps.model.SnappedPoint;
 import net.minidev.json.JSONArray;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class MainActivity extends Activity {
 
@@ -270,17 +275,37 @@ public class MainActivity extends Activity {
         @Override
         protected SnappedPoint[] doInBackground(Void... params) {
             try {
-                return RoadsApi.snapToRoads(context, true, input_points).await();
+                output_points = RoadsApi.snapToRoads(context, true, input_points).await();
+
+                Set<String> visitedPlaceIds = new HashSet<>();
+                for(SnappedPoint point : output_points) {
+                    if(!visitedPlaceIds.contains(point.placeId)) {
+                        visitedPlaceIds.add(point.placeId);
+                        GeocodingResult[] results = GeocodingApi.newRequest(context).place(point.placeId).await();
+
+                        if(results.length > 0)
+                            Log.d("ROADNAME", results[0].placeId + "\t" + results[0].formattedAddress);
+                        else
+                            Log.d("ROADNAME", point.placeId + "\tNo result from Geocoding");
+                    }
+                }
+
+                return output_points;
             } catch (Exception e) {
                 e.printStackTrace();
-                return new SnappedPoint[0];
+                output_points = new SnappedPoint[0];
+                return output_points;
             }
         }
 
         @Override
         protected void onPostExecute(SnappedPoint[] points) {
-            output_points = points;
-            textView.setText(output_points.length + " snapped points returned.");
+        //    output_points = points.clone();
+            textView.setText(points.length + " snapped points returned.");
+
+            for(SnappedPoint point : points) {
+                Log.d("PLACEID", point.originalIndex + " " + point.placeId);
+            }
         }
     };
 
@@ -306,7 +331,14 @@ public class MainActivity extends Activity {
 
         context = new GeoApiContext().setApiKey(getString(R.string.google_maps_key));
         taskSnapToRoads.execute();
-    //    textView.setText(output_points.length + " snapped points returned.");
+
+        if(output_points != null) {
+            for(SnappedPoint point : output_points) {
+                Log.d("STATE", point.originalIndex + " " + point.placeId);
+            }
+        } else {
+            Log.d("STATE", "output array is null");
+        }
     }
 
     public void handle(String jsonMessage) {
