@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -17,7 +18,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.model.LatLng;
+import com.google.maps.model.LatLng;
+import com.google.maps.GeoApiContext;
+import com.google.maps.RoadsApi;
+import com.google.maps.model.SnappedPoint;
 
 import net.minidev.json.JSONArray;
 
@@ -259,10 +263,29 @@ public class MainActivity extends Activity {
         tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
     }
 
-    public void checkGoogleMapsRoadsAPI(View view) {
-        textView.setText("Checking Google Maps Roads API's SnapToRoad method");
+    GeoApiContext context;
+    LatLng[] input_points;
+    SnappedPoint[] output_points;
+    AsyncTask<Void, Void, SnappedPoint[]> taskSnapToRoads = new AsyncTask<Void, Void, SnappedPoint[]>() {
+        @Override
+        protected SnappedPoint[] doInBackground(Void... params) {
+            try {
+                return RoadsApi.snapToRoads(context, true, input_points).await();
+            } catch (Exception e) {
+                e.printStackTrace();
+                return new SnappedPoint[0];
+            }
+        }
 
-        List<LatLng> coordinates = new ArrayList<LatLng>();
+        @Override
+        protected void onPostExecute(SnappedPoint[] points) {
+            output_points = points;
+            textView.setText(output_points.length + " snapped points returned.");
+        }
+    };
+
+    public void checkGoogleMapsRoadsAPI(View view) {
+        List<LatLng> coordinates = new ArrayList<>();
         coordinates.add(new LatLng(28.5453633626302, 77.1904949982961));
         coordinates.add(new LatLng(28.5454699834188, 77.1903216679891));
         coordinates.add(new LatLng(28.5448149998983, 77.1909266630808));
@@ -278,8 +301,12 @@ public class MainActivity extends Activity {
         coordinates.add(new LatLng(28.5452116648356, 77.1908583323161));
         coordinates.add(new LatLng(28.5452500025431, 77.1908333301544));
         coordinates.add(new LatLng(28.545304997762, 77.1907533327738));
-
+        input_points = coordinates.toArray(new LatLng[coordinates.size()]);
         textView.setText("We have " + coordinates.size() + " coordinates");
+
+        context = new GeoApiContext().setApiKey(getString(R.string.google_maps_key));
+        taskSnapToRoads.execute();
+    //    textView.setText(output_points.length + " snapped points returned.");
     }
 
     public void handle(String jsonMessage) {
