@@ -38,4 +38,6 @@ dependencies {
     compile files('libs/jcl-over-slf4j-1.7.5.jar')
     compile files('libs/log4j-1.2.17.jar')
     compile files('libs/json-smart-2.1.1.jar')
+    compile 'com.google.android.gms:play-services:8.3.0'
+    compile 'com.google.android.gms:play-services-maps:8.3.0'
 }

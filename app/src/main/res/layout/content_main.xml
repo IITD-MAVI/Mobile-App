@@ -46,13 +46,20 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/googleMapsRoads"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check Google Maps Roads API"
+        android:layout_marginTop="90dp" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/TextControl"
         android:id="@+id/textCtr"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="140dp"
         android:textAppearance="?android:attr/textAppearanceLarge" />
 
     <LinearLayout

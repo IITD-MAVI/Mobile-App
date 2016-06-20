@@ -17,8 +17,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import net.minidev.json.JSONArray;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity {
@@ -32,6 +36,7 @@ public class MainActivity extends Activity {
     private Button r2c1Btn;
     private Button r2c2Btn;
     private Button r2c3Btn;
+    private Button checkApi;
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_ENABLE_DSC = 3;
@@ -149,6 +154,14 @@ public class MainActivity extends Activity {
                 }
             });
 
+            checkApi = (Button) findViewById(R.id.googleMapsRoads);
+            checkApi.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    checkGoogleMapsRoadsAPI(v);
+                }
+            });
+
             mHandler = new Handler(Looper.getMainLooper()) {
                 @Override
                 public void handleMessage(Message message) {
@@ -244,6 +257,29 @@ public class MainActivity extends Activity {
         }
 
         tts.speak(toSpeak, TextToSpeech.QUEUE_FLUSH, null);
+    }
+
+    public void checkGoogleMapsRoadsAPI(View view) {
+        textView.setText("Checking Google Maps Roads API's SnapToRoad method");
+
+        List<LatLng> coordinates = new ArrayList<LatLng>();
+        coordinates.add(new LatLng(28.5453633626302, 77.1904949982961));
+        coordinates.add(new LatLng(28.5454699834188, 77.1903216679891));
+        coordinates.add(new LatLng(28.5448149998983, 77.1909266630808));
+        coordinates.add(new LatLng(28.5448466618856, 77.1909366607666));
+        coordinates.add(new LatLng(28.541875521342, 77.1909099896749));
+        coordinates.add(new LatLng(28.5449133555094, 77.1909099896749));
+        coordinates.add(new LatLng(28.5449333190917, 77.1909049987793));
+        coordinates.add(new LatLng(28.5449566523234, 77.1908899943034));
+        coordinates.add(new LatLng(28.5450050354004, 77.1908683300018));
+        coordinates.add(new LatLng(28.5450667063395, 77.1908816655477));
+        coordinates.add(new LatLng(28.545188331604, 77.1908999919891));
+        coordinates.add(new LatLng(28.545188331604, 77.1907716592153));
+        coordinates.add(new LatLng(28.5452116648356, 77.1908583323161));
+        coordinates.add(new LatLng(28.5452500025431, 77.1908333301544));
+        coordinates.add(new LatLng(28.545304997762, 77.1907533327738));
+
+        textView.setText("We have " + coordinates.size() + " coordinates");
     }
 
     public void handle(String jsonMessage) {
