@@ -20,10 +20,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.maps.GeocodingApi;
+import com.google.maps.PlacesApi;
 import com.google.maps.model.GeocodingResult;
 import com.google.maps.model.LatLng;
 import com.google.maps.GeoApiContext;
 import com.google.maps.RoadsApi;
+import com.google.maps.model.PlaceDetails;
 import com.google.maps.model.SnappedPoint;
 
 import net.minidev.json.JSONArray;
@@ -281,12 +283,18 @@ public class MainActivity extends Activity {
                 for(SnappedPoint point : output_points) {
                     if(!visitedPlaceIds.contains(point.placeId)) {
                         visitedPlaceIds.add(point.placeId);
-                        GeocodingResult[] results = GeocodingApi.newRequest(context).place(point.placeId).await();
+                    //    GeocodingResult[] results = GeocodingApi.newRequest(context).place(point.placeId).await();
+                        try {
+                            PlaceDetails result = PlacesApi.placeDetails(context, point.placeId).await();
+                            Log.d("ROADNAME", result.placeId + "\t" + result.formattedAddress + "\t" + result.name);
+                        } catch (Exception e) {
+                            Log.d("ROADNAME", point.placeId + "\tStatus " + e.toString());
+                        }
 
-                        if(results.length > 0)
-                            Log.d("ROADNAME", results[0].placeId + "\t" + results[0].formattedAddress);
-                        else
-                            Log.d("ROADNAME", point.placeId + "\tNo result from Geocoding");
+                        //if(result.length > 0)
+
+                        //else
+                      //      Log.d("ROADNAME", point.placeId + "\tNo result from Geocoding");
                     }
                 }
 
